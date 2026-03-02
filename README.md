@@ -1,49 +1,59 @@
 # FastAPI + React Random Number App
 
-This repository has two apps:
+Two apps with user management (Google OAuth, invitation-only, roles: user/admin):
 
-- `backend`: Python FastAPI API with a random number endpoint.
-- `frontend`: React (Vite + TypeScript) UI with a shadcn/ui-style button that calls the backend.
+- `backend`: FastAPI API (random number, auth, invitations, users).
+- `frontend`: React (Vite + shadcn/ui) with protected routes and admin User Management.
+
+## Supabase Setup
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Enable Google OAuth: Authentication → Providers → Google (Client ID + Secret from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)).
+3. Add redirect URL in Supabase: Auth → URL Configuration → Redirect URLs: `http://localhost:5173/**`, `https://yourapp.onrender.com/**`.
+4. Run the SQL migration: Supabase Dashboard → SQL Editor → paste and run contents of `supabase/migrations/001_initial_schema.sql`.
+5. Enable the auth hook: Authentication → Hooks → Customize Access Token Hook → select `custom_access_token_hook`.
+6. Bootstrap first admin: set `INITIAL_ADMIN_EMAIL` (your Google email) in backend env, or run:
+   ```sql
+   INSERT INTO public.user_roles (user_id, role) SELECT id, 'admin' FROM auth.users WHERE email = 'your@email.com';
+   ```
 
 ## Local Development
 
-### 1) Run backend
+### 1) Backend
 
 ```bash
 cd backend
+cp .env.example .env
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-Backend runs at `http://localhost:8000`.
-
-### 2) Run frontend
+### 2) Frontend
 
 ```bash
 cd frontend
 cp .env.example .env
+# Edit .env with VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL
 npm install
 npm run dev
 ```
 
-Frontend runs at `http://localhost:5173` and uses `VITE_API_URL` from `.env`.
-
 ## API Endpoints
 
-- `GET /health` -> health check
-- `GET /random` -> returns JSON like `{ "number": 123 }`
+- `GET /health` — health check
+- `GET /random` — returns `{ "number": 123 }`
+- `GET /auth/me` — current user + role (auth required)
+- `POST /auth/complete-invite` — consume invite token (auth required)
+- `POST /invitations` — create invite link (admin only)
+- `GET /users` — list users (admin only)
 
 ## Deploy to Render
 
-This repo includes `render.yaml` for Blueprint deploy.
-
-1. Push this repo to GitHub.
-2. In Render, create a new Blueprint and select your repo.
-3. Render will create:
-   - `random-fastapi-backend` (web service)
-   - `random-react-frontend` (static site)
-4. In the frontend service, set `VITE_API_URL` to your backend URL:
-   - e.g. `https://random-fastapi-backend.onrender.com`
-5. Trigger a redeploy of the frontend after setting the env var.
+1. Push to GitHub and deploy via Render Blueprint (`render.yaml`).
+2. Set env vars:
+   - **Backend:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `INITIAL_ADMIN_EMAIL`, `FRONTEND_URL`.
+   - **Frontend:** `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+3. Add frontend URL to Supabase redirect URLs.
+4. Redeploy frontend after setting env vars.
