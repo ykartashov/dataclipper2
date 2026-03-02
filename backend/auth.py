@@ -1,34 +1,27 @@
 """Auth utilities: JWT validation and dependency injection."""
-import os
 from uuid import UUID
 
-import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-INITIAL_ADMIN_EMAIL = os.environ.get("INITIAL_ADMIN_EMAIL", "")
+from db import get_supabase
 
 security = HTTPBearer(auto_error=False)
 
 
 def get_token_claims(credentials: HTTPAuthorizationCredentials | None) -> dict | None:
-    """Validate Supabase JWT and return payload, or None if no/invalid token."""
+    """Validate access token with Supabase and return minimal claims."""
     if not credentials or not credentials.credentials:
         return None
-    if not JWT_SECRET:
-        return None
     try:
-        payload = jwt.decode(
-            credentials.credentials,
-            JWT_SECRET,
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
-        return payload
-    except jwt.InvalidTokenError:
+        token = credentials.credentials
+        supabase = get_supabase()
+        user_response = supabase.auth.get_user(token)
+        user = getattr(user_response, "user", None)
+        if not user:
+            return None
+        return {"sub": str(user.id), "email": user.email}
+    except Exception:
         return None
 
 
@@ -48,8 +41,17 @@ def require_auth(
 def require_admin(
     claims: dict = Depends(require_auth),
 ) -> dict:
-    """Dependency: require admin role, raise 403 if not admin."""
-    role = claims.get("user_role")
+    """Dependency: require admin role from DB, raise 403 if not admin."""
+    user_id = get_user_id(claims)
+    supabase = get_supabase()
+    role_resp = (
+        supabase.table("user_roles")
+        .select("role")
+        .eq("user_id", str(user_id))
+        .maybe_single()
+        .execute()
+    )
+    role = role_resp.data.get("role") if role_resp.data else None
     if role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
