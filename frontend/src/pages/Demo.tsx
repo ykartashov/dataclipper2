@@ -15,10 +15,17 @@ export default function Demo() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_URL}/random`)
+      const session = (await import('@/lib/supabase')).supabase.auth.getSession()
+      const { data: sessionData } = await session
+      const accessToken = sessionData.session?.access_token
+      if (!accessToken) throw new Error('Missing auth session')
+
+      const res = await fetch(`${API_URL}/random`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
       if (!res.ok) throw new Error(`Request failed with status ${res.status}`)
-      const data: { number: number } = await res.json()
-      setRandomNumber(data.number)
+      const payload: { number: number } = await res.json()
+      setRandomNumber(payload.number)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error')
     } finally {

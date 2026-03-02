@@ -76,6 +76,32 @@ export default function UserManagement() {
     }
   }
 
+  async function setRole(userId: string, role: 'user' | 'admin') {
+    setError(null)
+    try {
+      const session = (await import('@/lib/supabase')).supabase.auth.getSession()
+      const { data } = await session
+      const accessToken = data.session?.access_token
+      if (!accessToken) return
+      const res = await fetch(`${API_URL}/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role }),
+      })
+      const body = await res.json()
+      if (!res.ok) {
+        setError(body.detail ?? 'Failed to update role')
+        return
+      }
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unknown error')
+    }
+  }
+
   function copyLink() {
     if (inviteLink) navigator.clipboard.writeText(inviteLink)
   }
@@ -119,15 +145,34 @@ export default function UserManagement() {
                 className="flex items-center justify-between px-4 py-3"
               >
                 <span className="text-slate-700">{u.email ?? u.id}</span>
-                <span
-                  className={`rounded px-2 py-0.5 text-xs font-medium ${
-                    u.role === 'admin'
-                      ? 'bg-slate-800 text-white'
-                      : 'bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  {u.role}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`rounded px-2 py-0.5 text-xs font-medium ${
+                      u.role === 'admin'
+                        ? 'bg-slate-800 text-white'
+                        : 'bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {u.role}
+                  </span>
+                  {u.role !== 'admin' ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRole(u.id, 'admin')}
+                    >
+                      Promote
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRole(u.id, 'user')}
+                    >
+                      Demote
+                    </Button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
