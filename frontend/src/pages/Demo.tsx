@@ -1,12 +1,9 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/contexts/AuthContext'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 export default function Demo() {
-  const { user, signOut } = useAuth()
   const [randomNumber, setRandomNumber] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,44 +31,18 @@ export default function Demo() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-8">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-slate-500">{user?.email}</p>
-          <p className="text-xs text-slate-400">Role: {user?.role ?? '—'}</p>
-        </div>
-        <nav className="flex gap-4">
-          <Link
-            to="/"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            Demo
-          </Link>
-          {user?.role === 'admin' && (
-            <Link
-              to="/users"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              User Management
-            </Link>
-          )}
-          <Button variant="outline" size="sm" onClick={() => signOut()}>
-            Sign out
-          </Button>
-        </nav>
-      </header>
-
-      <div className="flex-1 rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="flex flex-1 flex-col">
+      <div className="flex-1 rounded-xl border border-border bg-card p-8 shadow-sm">
         <h1 className="mb-2 text-3xl font-semibold">Random Number Demo</h1>
-        <p className="mb-6 text-slate-600">
+        <p className="mb-6 text-muted-foreground">
           Frontend uses React + shadcn/ui-style button, backend uses FastAPI.
         </p>
 
-        <div className="mb-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-          <p className="text-sm uppercase tracking-wide text-slate-500">
+        <div className="mb-6 rounded-lg border border-dashed border-muted-foreground/25 bg-muted/50 p-6 text-center">
+          <p className="text-sm uppercase tracking-wide text-muted-foreground">
             Current random number
           </p>
-          <p className="mt-2 text-5xl font-bold text-slate-900">
+          <p className="mt-2 text-5xl font-bold">
             {randomNumber ?? '--'}
           </p>
         </div>
@@ -81,11 +52,11 @@ export default function Demo() {
         </Button>
 
         {error && (
-          <p className="mt-4 text-sm text-red-600">
+          <p className="mt-4 text-sm text-destructive">
             Failed to fetch: {error}
           </p>
         )}
       </div>
-    </main>
+    </div>
   )
 }

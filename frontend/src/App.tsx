@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { AppLayout } from '@/components/AppLayout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Demo from '@/pages/Demo'
 import InvitePage from '@/pages/InvitePage'
@@ -14,18 +15,20 @@ export default function App() {
         path="/"
         element={
           <ProtectedRoute>
-            <Demo />
+            <AppLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute requireAdmin>
-            <UserManagement />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route index element={<Demo />} />
+        <Route
+          path="users"
+          element={
+            <ProtectedRoute requireAdmin>
+              <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

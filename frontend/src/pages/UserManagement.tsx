@@ -108,14 +108,14 @@ export default function UserManagement() {
 
   if (authLoading || (!user || user.role !== 'admin')) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-slate-500">Loading...</p>
-      </main>
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
     )
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-8">
+    <div className="flex flex-1 flex-col">
       <h1 className="mb-6 text-2xl font-semibold">User Management</h1>
 
       <div className="mb-6 flex flex-col gap-4">
@@ -123,34 +123,34 @@ export default function UserManagement() {
           {inviting ? 'Creating...' : 'Invite user'}
         </Button>
         {inviteLink && (
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-3">
             <code className="flex-1 truncate text-sm">{inviteLink}</code>
             <Button variant="outline" size="sm" onClick={copyLink}>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
         )}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
 
       <div>
         <h2 className="mb-3 text-lg font-medium">Users</h2>
         {loading ? (
-          <p className="text-slate-500">Loading users...</p>
+          <p className="text-muted-foreground">Loading users...</p>
         ) : (
-          <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200">
+          <ul className="divide-y divide-border rounded-lg border border-border">
             {users.map((u) => (
               <li
                 key={u.id}
                 className="flex items-center justify-between px-4 py-3"
               >
-                <span className="text-slate-700">{u.email ?? u.id}</span>
+                <span>{u.email ?? u.id}</span>
                 <div className="flex items-center gap-2">
                   <span
                     className={`rounded px-2 py-0.5 text-xs font-medium ${
                       u.role === 'admin'
-                        ? 'bg-slate-800 text-white'
-                        : 'bg-slate-200 text-slate-700'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {u.role}
@@ -178,6 +178,6 @@ export default function UserManagement() {
           </ul>
         )}
       </div>
-    </main>
+    </div>
   )
 }
