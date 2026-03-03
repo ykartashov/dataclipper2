@@ -29,7 +29,8 @@ def get_me(claims: dict = Depends(require_auth)):
         .maybe_single()
         .execute()
     )
-    role = role_resp.data.get("role") if role_resp.data else None
+    role_data = getattr(role_resp, "data", None) if role_resp else None
+    role = role_data.get("role") if role_data else None
     return {
         "id": str(user_id),
         "email": email,
@@ -64,8 +65,9 @@ def complete_invite(
         .maybe_single()
         .execute()
     )
-    if existing.data:
-        return {"ok": True, "role": existing.data["role"]}
+    existing_data = getattr(existing, "data", None) if existing else None
+    if existing_data:
+        return {"ok": True, "role": existing_data.get("role")}
 
     # Fetch invitation
     inv_resp = (
@@ -75,9 +77,10 @@ def complete_invite(
         .maybe_single()
         .execute()
     )
-    if not inv_resp.data:
+    inv_data = getattr(inv_resp, "data", None) if inv_resp else None
+    if not inv_data:
         raise HTTPException(status_code=404, detail="Invitation not found")
-    if inv_resp.data.get("used_at"):
+    if inv_data.get("used_at"):
         raise HTTPException(status_code=400, detail="Invitation already used")
 
     # Assign role: admin if INITIAL_ADMIN_EMAIL matches, else user
@@ -91,6 +94,6 @@ def complete_invite(
 
     supabase.table("invitations").update(
         {"used_by": str(user_id), "used_at": datetime.now(timezone.utc).isoformat()}
-    ).eq("id", inv_resp.data["id"]).execute()
+    ).eq("id", inv_data["id"]).execute()
 
     return {"ok": True, "role": role}

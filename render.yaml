@@ -26,6 +26,18 @@ services:
     staticPublishPath: dist
     routes:
       - type: rewrite
+        source: /invite
+        destination: /index.html
+      - type: rewrite
+        source: /invite/*
+        destination: /index.html
+      - type: rewrite
+        source: /login
+        destination: /index.html
+      - type: rewrite
+        source: /users
+        destination: /index.html
+      - type: rewrite
         source: /*
         destination: /index.html
     envVars:

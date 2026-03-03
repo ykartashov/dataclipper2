@@ -64,7 +64,8 @@ def require_admin(
         .maybe_single()
         .execute()
     )
-    role = role_resp.data.get("role") if role_resp.data else None
+    role_data = getattr(role_resp, "data", None) if role_resp else None
+    role = role_data.get("role") if role_data else None
     if role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
