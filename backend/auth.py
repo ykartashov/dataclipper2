@@ -1,4 +1,5 @@
 """Auth utilities: JWT validation and dependency injection."""
+import logging
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -7,21 +8,33 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from db import get_supabase
 
 security = HTTPBearer(auto_error=False)
+logger = logging.getLogger(__name__)
 
 
 def get_token_claims(credentials: HTTPAuthorizationCredentials | None) -> dict | None:
     """Validate access token with Supabase and return minimal claims."""
     if not credentials or not credentials.credentials:
         return None
+
+    token = credentials.credentials
     try:
-        token = credentials.credentials
         supabase = get_supabase()
+    except RuntimeError as exc:
+        # Backend misconfiguration should not look like auth failure.
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
+
+    try:
         user_response = supabase.auth.get_user(token)
         user = getattr(user_response, "user", None)
         if not user:
+            logger.warning("Token validation failed: no user returned from Supabase")
             return None
         return {"sub": str(user.id), "email": user.email}
-    except Exception:
+    except Exception as exc:
+        logger.warning("Token validation failed: %s", exc)
         return None
 
 
